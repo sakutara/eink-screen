@@ -22,12 +22,13 @@ export const LUT_UPDATE_VALUE = 0xc7;
 /** Bytes written by `0x32`: VS 5x12 + TP/SR/RP 12x7 + frame rate/XON 9. */
 export const LUT_BYTES = 153;
 /** Upper bound of frames per phase so a typo cannot hold the panel under DC drive for long. */
-export const LUT_MAX_FRAMES = 0x40;
+export const LUT_MAX_FRAMES = 0x64;
 
-export type LutId = 'fast50' | 'fast25' | 'fast15' | 'fast8';
+export type LutId = 'fast100' | 'fast50' | 'fast25' | 'fast15' | 'fast8';
 
 /** Single-phase B/W LUTs derived from the public Waveshare 2.9" V2 `WF_FULL` (about 1.0 s at 25+25 frames). */
 export const LUT_PRESETS: Record<LutId, { label: string; frames: number }> = {
+  fast100: { label: 'fast100 · gấp 4 lần tham chiếu, ~4,0 s (thử độ rõ chữ)', frames: 0x64 },
   fast50: { label: 'fast50 · gấp đôi tham chiếu, ~2,0 s (thử độ rõ)', frames: 0x32 },
   fast25: { label: 'fast25 · tham chiếu Waveshare WF_FULL, ~1,0 s', frames: 0x19 },
   fast15: { label: 'fast15 · rút ngắn còn ~0,6 s', frames: 0x0f },

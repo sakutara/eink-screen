@@ -4,7 +4,7 @@ import type { Values } from '../integrations/types';
 import { formatClock, formatDistance } from '../miniapps/format';
 import { directionsSimMiniApp } from '../miniapps/directions/simMiniApp';
 import { SIM_DEFAULTS, SIM_ROUTE, framesToArrive, simulateTrip, summarizeTrip } from '../miniapps/directions/simulation';
-import { ALGORITHM_FIELD, CONTRAST_FIELD, DEFAULT_GHOST_CLEAR_EVERY, normalizeQuality } from '../miniapps/quality';
+import { ALGORITHM_FIELD, CONTRAST_FIELD, THRESHOLD_FIELD, DEFAULT_GHOST_CLEAR_EVERY, normalizeQuality } from '../miniapps/quality';
 import type { QualitySettings } from '../miniapps/types';
 import { renderFrame } from '../modes/frame';
 import type { PaletteName } from '../render/dither';
@@ -31,7 +31,7 @@ function PreviewCanvas({ image, scale = 2 }: { image: PixelImage; scale?: number
 export function SimulationPage() {
   const [sim, setSim] = useState<Values>({ speedKmh: SIM_DEFAULTS.speedKmh, intervalSec: SIM_DEFAULTS.intervalSec, frames: SIM_DEFAULTS.frames });
   const [quality, setQuality] = useState<Values>({ contrast: 1 });
-  const [palette, setPalette] = useState<PaletteName>('bwr');
+  const [palette, setPalette] = useState<PaletteName>('bw');
   const [speedMul, setSpeedMul] = useState<number>(5);
   const [playing, setPlaying] = useState(false);
   const [shown, setShown] = useState<number>(Infinity);
@@ -96,7 +96,7 @@ export function SimulationPage() {
             values={sim}
             onChange={(v) => { setSim(v); setPlaying(false); setShown(Infinity); }}
           />
-          <FieldForm fields={[ALGORITHM_FIELD, CONTRAST_FIELD]} values={{ ...quality, algorithm: q.algorithm }} onChange={setQuality} />
+          <FieldForm fields={[ALGORITHM_FIELD, CONTRAST_FIELD, THRESHOLD_FIELD]} values={{ ...quality, algorithm: q.algorithm }} onChange={setQuality} />
         </div>
         <div class="row" style="margin-top:10px">
           <span class="muted">Bảng màu</span>

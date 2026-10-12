@@ -88,7 +88,7 @@ describe('custom LUT', () => {
   });
 
   it('rejects out-of-range frame counts', () => {
-    for (const n of [0, -1, 65, 1.5]) expect(() => buildLut(n)).toThrow(RangeError);
+    for (const n of [0, -1, 101, 1.5]) expect(() => buildLut(n)).toThrow(RangeError);
   });
 
   it('LUT run: bypass, 0x32 data, forced 0xC7, trigger last, no voltage registers', () => {

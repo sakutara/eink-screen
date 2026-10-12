@@ -52,7 +52,7 @@ function scriptedMiniApp(script: (string | null)[]) {
   return { app, stop, rendered };
 }
 
-const quality: QualitySettings = { palette: 'bwr', algorithm: 'threshold', contrast: 1, minIntervalSec: 35, ghostClearEvery: 10, layout: 'full' };
+const quality: QualitySettings = { palette: 'bwr', algorithm: 'threshold', contrast: 1, threshold: 128, minIntervalSec: 35, ghostClearEvery: 10, layout: 'full' };
 
 let wake: { acquire: Mock<() => Promise<void>>; release: Mock<() => Promise<void>> };
 const deps = (): Partial<RunnerDeps> => ({

@@ -131,7 +131,7 @@ describe('formatting and text', () => {
 
 describe('normalizeQuality', () => {
   it('defaults and clamps', () => {
-    expect(normalizeQuality(undefined)).toMatchObject({ palette: 'bwr', minIntervalSec: 25, layout: 'full' });
+    expect(normalizeQuality(undefined)).toMatchObject({ palette: 'bw', algorithm: 'threshold', minIntervalSec: 5, layout: 'full' });
     expect(normalizeQuality({ contrast: 99, layout: 'clockImage' })).toMatchObject({ contrast: 2.5, layout: 'full' });
   });
 });

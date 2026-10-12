@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { sanitizeLabel } from '../ble/protocol';
 import type { UploadProgress } from '../ble/device';
 import type { Values } from '../integrations/types';
-import { ALGORITHM_FIELD, CONTRAST_FIELD, PALETTE_FIELD } from '../miniapps/quality';
+import { ALGORITHM_FIELD, CONTRAST_FIELD, THRESHOLD_FIELD, PALETTE_FIELD } from '../miniapps/quality';
 import { applyCountdown, countdownMaxLabel, drawStill, parseCountdown, sendStill, showCalendar, showClock, type FitMode } from '../modes/oneShot';
 import { canvasToPlanes, createCanvas, get2d, putPixels } from '../render/canvas';
 import type { Planes } from '../render/pack';
@@ -85,7 +85,7 @@ function StillImageCard({ busy, run }: { busy: boolean; run: Run }) {
   const [fit, setFit] = useState<FitMode>('fit');
   const [offsetX, setOffsetX] = useState(0);
   const [offsetY, setOffsetY] = useState(0);
-  const [quality, setQuality] = useState<Values>({ palette: 'bwr', algorithm: 'floyd-steinberg', contrast: 1 });
+  const [quality, setQuality] = useState<Values>({ palette: 'bw', algorithm: 'threshold', contrast: 1 });
   const [progress, setProgress] = useState<UploadProgress>();
   const preview = useRef<HTMLCanvasElement>(null);
   const planes = useRef<Planes | undefined>(undefined);
@@ -95,9 +95,10 @@ function StillImageCard({ busy, run }: { busy: boolean; run: Run }) {
     const canvas = createCanvas();
     drawStill(get2d(canvas), bitmap, { mode: fit, offsetX, offsetY });
     const out = canvasToPlanes(canvas, {
-      palette: quality.palette === 'bw' ? 'bw' : 'bwr',
+      palette: quality.palette === 'bwr' ? 'bwr' : 'bw',
       algorithm: (quality.algorithm as 'threshold') ?? 'floyd-steinberg',
       contrast: Number(quality.contrast) || 1,
+      threshold: Number(quality.threshold) || undefined,
     });
     planes.current = out.planes;
     putPixels(preview.current, out.preview);
@@ -129,7 +130,7 @@ function StillImageCard({ busy, run }: { busy: boolean; run: Run }) {
           <label class="field">Dịch dọc
             <input type="range" min={-1} max={1} step={0.05} value={offsetY} onInput={(e) => setOffsetY(Number(e.currentTarget.value))} />
           </label>
-          <FieldForm fields={[PALETTE_FIELD, ALGORITHM_FIELD, CONTRAST_FIELD]} values={quality} onChange={setQuality} />
+          <FieldForm fields={[PALETTE_FIELD, ALGORITHM_FIELD, CONTRAST_FIELD, THRESHOLD_FIELD]} values={quality} onChange={setQuality} />
         </>
       )}
       <p class="muted">Xem trước (đã dither, đúng như màn sẽ hiển thị):</p>
@@ -137,7 +138,7 @@ function StillImageCard({ busy, run }: { busy: boolean; run: Run }) {
       {progress && <p class="muted">{progress.phase}: <progress max={1} value={progress.fraction} /></p>}
       <button class="primary" disabled={busy || !bitmap} onClick={() => run('Gửi ảnh tĩnh', async () => {
         if (!planes.current) throw new Error('Chưa có ảnh');
-        const t = await sendStill(d, planes.current, setProgress, quality.palette === 'bw' ? 'bw' : 'bwr');
+        const t = await sendStill(d, planes.current, setProgress, quality.palette === 'bwr' ? 'bwr' : 'bw');
         setProgress(undefined);
         return `gửi ${t.sendMs} ms, chờ refresh ${t.busyMs} ms`;
       }, `Gửi ảnh lên màn (mất khoảng ${quality.palette === 'bw' ? 12 : 20} giây, màn nhấp nháy)? Chế độ hiện tại sẽ được thay bằng ảnh.`)}>

@@ -13,5 +13,5 @@ export interface Frame {
 export function renderFrame(miniapp: MiniApp, data: unknown, settings: Record<string, unknown>, quality: QualitySettings): Frame {
   const canvas = createCanvas(PANEL.width, PANEL.height);
   miniapp.render(get2d(canvas), data, { width: PANEL.width, height: PANEL.height, palette: quality.palette }, settings);
-  return canvasToPlanes(canvas, { palette: quality.palette, algorithm: quality.algorithm, contrast: quality.contrast });
+  return canvasToPlanes(canvas, { palette: quality.palette, algorithm: quality.algorithm, contrast: quality.contrast, threshold: quality.threshold });
 }

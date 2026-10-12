@@ -22,7 +22,8 @@ export interface DirectionsData {
   destination: string;
 }
 
-const FONT = 'system-ui, "Segoe UI", Roboto, "Noto Sans", sans-serif';
+/** Regular weight, upright (no bold/italic). Helvetica first; Arial/Liberation Sans are its metric-compatible stand-ins. */
+const FONT = 'Helvetica, Arial, "Liberation Sans", "Noto Sans", sans-serif';
 const OFF_ROUTE_M = 80;
 const MOVED_M = 100;
 const MIN_REFETCH_MS = 15_000;
@@ -121,25 +122,25 @@ export const directionsMiniApp: MiniApp<DirectionsSettings, DirectionsData> = {
   key: directionsKey,
 
   render(ctx, d, { width, height, palette }) {
-    ctx.fillStyle = '#fff';
+    // Inverted: white text/arrow on a black background.
+    ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, width, height);
-    const accent = palette === 'bwr' ? '#f00' : '#000';
+    const accent = palette === 'bwr' ? '#f00' : '#fff';
     drawManeuver(ctx, d.arrived ? 'ARRIVE' : d.maneuver, 62, 64, 112, accent);
 
     const x = 132, maxW = width - x - 6;
     const measure = ctxMeasure(ctx);
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillStyle = '#000';
-    ctx.font = `bold 28px ${FONT}`;
+    ctx.fillStyle = '#fff';
+    ctx.font = `normal normal 28px ${FONT}`;
     ctx.fillText(d.arrived ? 'Đã đến' : formatDistance(d.distanceToManeuver), x, 4);
 
-    // Bold: the black/white fast path (ADR-10) blurs thin strokes; sizes kept moderate for 3 lines.
-    ctx.font = `bold 15px ${FONT}`;
+    ctx.font = `normal normal 13px ${FONT}`; // ≈10 pt
     const lines = wrapText(measure, d.instruction || (d.arrived ? d.destination : ''), maxW, 3);
-    lines.forEach((line, i) => ctx.fillText(line, x, 38 + i * 18));
+    lines.forEach((line, i) => ctx.fillText(line, x, 40 + i * 16));
 
-    ctx.font = `bold 13px ${FONT}`;
+    ctx.font = `normal normal 13px ${FONT}`;
     ctx.textBaseline = 'bottom';
     const footer = `Còn ${formatDistance(d.remainingMeters)} · ${formatClock(new Date(d.etaMs))}`;
     ctx.fillText(ellipsize(measure, footer, maxW), x, height - 4);

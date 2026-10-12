@@ -14,17 +14,23 @@ export const ALGORITHM_BY_PALETTE: Record<PaletteName, QualitySettings['algorith
   bwr: 'floyd-steinberg',
   bw: 'threshold',
 };
+/** Neutral black level of the 'threshold' algorithm: the image goes out as drawn. */
+export const DEFAULT_THRESHOLD = 128;
+/** Earlier default for bw (reverted): dropped from stored settings so the image goes out as drawn. */
+const LEGACY_BW_THRESHOLD = 160;
 export const defaultAlgorithm = (palette: PaletteName): QualitySettings['algorithm'] => ALGORITHM_BY_PALETTE[palette];
 /** Default stored by older versions (before the interval followed the palette). */
 const LEGACY_MIN_INTERVAL_SEC = 35;
 
 export const defaultMinInterval = (palette: PaletteName): number => MIN_INTERVAL_SEC[palette];
 
+/** Black/white with a plain threshold: no red plane and no error-diffusion grain. */
 export const DEFAULT_QUALITY: QualitySettings = {
-  palette: 'bwr',
-  algorithm: 'floyd-steinberg',
+  palette: 'bw',
+  algorithm: 'threshold',
   contrast: 1,
-  minIntervalSec: MIN_INTERVAL_SEC.bwr,
+  threshold: DEFAULT_THRESHOLD,
+  minIntervalSec: MIN_INTERVAL_SEC.bw,
   ghostClearEvery: DEFAULT_GHOST_CLEAR_EVERY,
   layout: 'full',
 };
@@ -45,10 +51,16 @@ export const CONTRAST_FIELD: FieldSpec = {
   key: 'contrast', label: 'Độ tương phản', type: 'number', min: 0.5, max: 2.5, step: 0.1,
 };
 
+export const THRESHOLD_FIELD: FieldSpec = {
+  key: 'threshold', label: 'Ngưỡng đen (thuật toán Ngưỡng)', type: 'number', min: 64, max: 224, step: 8,
+  help: '128 = trung tính. Cao hơn (160–180) làm nét chữ dày hơn; quá cao sẽ làm chữ bết. Không áp dụng cho Floyd–Steinberg/Atkinson.',
+};
+
 export const QUALITY_FIELDS: FieldSpec[] = [
   PALETTE_FIELD,
   ALGORITHM_FIELD,
   CONTRAST_FIELD,
+  THRESHOLD_FIELD,
   { key: 'minIntervalSec', label: 'Khoảng cập nhật tối thiểu', type: 'number', min: 5, max: 600, step: 5, unit: 'giây',
     help: 'Full refresh 3 màu ~15 s, đen/trắng nhanh ~1-2 s cộng truyền ảnh. Mặc định 25 s (3 màu) hoặc 5 s (đen/trắng).' },
   { key: 'ghostClearEvery', label: 'Xoá ghost sau mỗi', type: 'number', min: 0, max: 100, step: 1, unit: 'khung',
@@ -69,9 +81,11 @@ export const QUALITY_FIELDS: FieldSpec[] = [
  */
 export function normalizeQuality(raw: Partial<QualitySettings> | undefined): QualitySettings {
   const q = { ...DEFAULT_QUALITY, ...raw };
-  if (q.palette !== 'bw') q.palette = 'bwr';
+  if (q.palette !== 'bwr') q.palette = 'bw';
   if (raw?.algorithm === undefined) q.algorithm = defaultAlgorithm(q.palette);
   q.contrast = Number.isFinite(Number(q.contrast)) ? Math.min(2.5, Math.max(0.5, Number(q.contrast))) : 1;
+  const th = Number(raw?.threshold);
+  q.threshold = raw?.threshold === undefined || !Number.isFinite(th) ? DEFAULT_THRESHOLD : Math.min(224, Math.max(64, th));
   const interval = Number(raw?.minIntervalSec);
   q.minIntervalSec = raw?.minIntervalSec === undefined || !Number.isFinite(interval)
     ? defaultMinInterval(q.palette)
@@ -106,5 +120,13 @@ export function migrateStoredQuality(raw: Partial<QualitySettings>): Partial<Qua
   const out = { ...raw };
   if (out.minIntervalSec === LEGACY_MIN_INTERVAL_SEC) delete out.minIntervalSec;
   if (out.palette === 'bw' && out.algorithm === 'floyd-steinberg') delete out.algorithm;
+  if (out.threshold === LEGACY_BW_THRESHOLD) delete out.threshold;
+  // The default is now black/white + threshold (no grain): drop the old 3-colour default so it follows it.
+  if (out.palette === 'bwr') {
+    delete out.palette;
+    if (out.algorithm === 'floyd-steinberg') delete out.algorithm;
+    delete out.minIntervalSec;
+    delete out.threshold;
+  }
   return out;
 }

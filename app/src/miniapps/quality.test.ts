@@ -3,7 +3,7 @@ import { followPaletteInterval, migrateStoredQuality, normalizeQuality } from '.
 
 describe('quality defaults', () => {
   it('min interval follows the palette when not set', () => {
-    expect(normalizeQuality({}).minIntervalSec).toBe(25);
+    expect(normalizeQuality({}).minIntervalSec).toBe(5);
     expect(normalizeQuality({ palette: 'bwr' }).minIntervalSec).toBe(25);
     expect(normalizeQuality({ palette: 'bw' }).minIntervalSec).toBe(5);
   });
@@ -22,7 +22,8 @@ describe('quality defaults', () => {
   });
 
   it('algorithm follows the palette: threshold for bw, Floyd-Steinberg for bwr', () => {
-    expect(normalizeQuality({}).algorithm).toBe('floyd-steinberg');
+    expect(normalizeQuality({}).algorithm).toBe('threshold');
+    expect(normalizeQuality({ palette: 'bwr' }).algorithm).toBe('floyd-steinberg');
     expect(normalizeQuality({ palette: 'bw' }).algorithm).toBe('threshold');
     expect(normalizeQuality({ palette: 'bw', algorithm: 'atkinson' }).algorithm).toBe('atkinson');
     expect(normalizeQuality({ palette: 'bw', algorithm: 'floyd-steinberg' }).algorithm).toBe('floyd-steinberg');
@@ -31,7 +32,8 @@ describe('quality defaults', () => {
   it('stored bw + Floyd-Steinberg (old default) is migrated to follow the palette; other choices are kept', () => {
     expect(normalizeQuality(migrateStoredQuality({ palette: 'bw', algorithm: 'floyd-steinberg' })).algorithm).toBe('threshold');
     expect(normalizeQuality(migrateStoredQuality({ palette: 'bw', algorithm: 'atkinson' })).algorithm).toBe('atkinson');
-    expect(normalizeQuality(migrateStoredQuality({ palette: 'bwr', algorithm: 'floyd-steinberg' })).algorithm).toBe('floyd-steinberg');
+    // the old 3-colour default is dropped on load so it follows the new black/white + threshold default
+    expect(normalizeQuality(migrateStoredQuality({ palette: 'bwr', algorithm: 'floyd-steinberg' }))).toMatchObject({ palette: 'bw', algorithm: 'threshold' });
   });
 
   it('form: palette change moves the algorithm only while it is the old default', () => {

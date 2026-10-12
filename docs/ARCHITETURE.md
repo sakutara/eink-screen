@@ -109,5 +109,6 @@ Config byte: `[7]` model, `[11]` mode hiện tại, `[12]` ngày đầu tuần. 
 - Chữ đi qua dither chung với ảnh: palette đen/trắng dùng `threshold` mặc định, 3 màu dùng Floyd–Steinberg nên mép chữ 3 màu có thể lấm tấm (ADR-3, ADR-4).
 - Dừng chế độ liên tục mà không khôi phục được mode ban đầu thì chuyển sang app lịch trước khi ngắt kết nối (ADR-3, ADR-4).
 - Refresh đen/trắng nhanh dùng LUT `0x32` cố định (ADR-10): độ phân giải/độ rõ thấp hơn waveform OTP (độ đậm 3–4 so với 4–5), chưa kiểm chứng ghost sau nhiều khung liên tiếp; polarity, điện áp và nhiệt độ thấp chưa thử.
+- Chữ miniapp Chỉ đường dùng Helvetica thường + ngưỡng cứng 128, mặc định đen/trắng (ADR-12): chưa kiểm chứng trên màn thật; miniapp Spotify vẫn font hệ thống.
 - Chia sẻ từ Google Maps (ADR-11): tuyến do app tự tính có thể khác tuyến trong Maps; link rút gọn không giải được; Maps ở nền có thể làm PWA ngừng cập nhật.
 - Chưa xác nhận trên thiết bị: `getDevices`/`watchAdvertisements`, CORS ảnh bìa Spotify, độ ổn định của kết nối giữ suốt phiên dài.

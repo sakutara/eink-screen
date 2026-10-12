@@ -8,6 +8,11 @@ export interface DitherOptions {
   algorithm: DitherAlgorithm;
   /** 1 = unchanged, >1 more contrast, <1 less. */
   contrast?: number;
+  /**
+   * 'threshold' algorithm only: grey level (0-255) below which a pixel becomes black. 128 = neutral; higher
+   * turns anti-aliased glyph edges black, so strokes look thicker. Ignored by the error-diffusion algorithms.
+   */
+  threshold?: number;
 }
 
 type RGB = readonly [number, number, number];
@@ -35,13 +40,14 @@ export function dither(src: PixelImage, opts: DitherOptions): PixelImage {
   const { width, height } = src;
   const palette = PALETTES[opts.palette];
   const contrast = opts.contrast ?? 1;
+  const shift = opts.algorithm === 'threshold' ? 128 - clamp(opts.threshold ?? 128) : 0;
   const buf = new Float32Array(width * height * 3);
 
   for (let p = 0; p < width * height; p++) {
     const a = (src.data[p * 4 + 3] as number) / 255;
     for (let c = 0; c < 3; c++) {
       const v = (src.data[p * 4 + c] as number) * a + 255 * (1 - a);
-      buf[p * 3 + c] = clamp((v - 128) * contrast + 128);
+      buf[p * 3 + c] = clamp((v - 128) * contrast + 128 + shift);
     }
   }
 

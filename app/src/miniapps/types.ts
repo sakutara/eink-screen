@@ -9,6 +9,8 @@ export interface QualitySettings {
   palette: PaletteName;
   algorithm: DitherAlgorithm;
   contrast: number;
+  /** Black level for the 'threshold' algorithm (0-255, 128 = neutral). Default follows the palette. */
+  threshold: number;
   /** Minimum seconds between two panel updates (default follows the palette, see quality.ts). */
   minIntervalSec: number;
   /** Palette 'bw' only: every N-th frame is a normal full refresh that clears ghosting. 0 = off. */
