@@ -5,14 +5,16 @@ import type { Values } from '../integrations/types';
 import { QUALITY_FIELDS, followPaletteInterval, migrateStoredQuality, normalizeQuality } from '../miniapps/quality';
 import { getMiniApp, miniApps } from '../miniapps/registry';
 import type { QualitySettings } from '../miniapps/types';
-import { active, setActiveRunner } from '../modes/active';
-import { ContinuousRunner, type RunnerState } from '../modes/continuous';
-import { KeepAliveTransport } from '../modes/transports';
+import { active } from '../modes/active';
+import type { ContinuousRunner, RunnerState } from '../modes/continuous';
+import { startMiniApp } from '../modes/launch';
 import { putPixels } from '../render/canvas';
 import { session } from '../state/session';
-import { loadValue, saveValue } from '../state/settings';
+import { loadValue } from '../state/settings';
 import { DevicePicker } from './DevicePicker';
 import { FieldForm } from './FieldForm';
+import { ShareCard } from './ShareCard';
+import { share } from '../state/share';
 
 const STATE_LABEL: Record<RunnerState, string> = {
   idle: 'Chưa chạy',
@@ -27,6 +29,7 @@ const STATE_LABEL: Record<RunnerState, string> = {
 export function ContinuousPage() {
   const { runner } = active.use();
   const s = session.use();
+  const sh = share.use();
   const [miniId, setMiniId] = useState(miniApps[0]!.id);
   const [settings, setSettings] = useState<Values>({});
   const [quality, setQuality] = useState<Values>({});
@@ -50,7 +53,12 @@ export function ContinuousPage() {
       const ready = await Promise.all(mini.requires.map(async (id) => [id, await isIntegrationReady(id)] as const));
       setMissing(ready.filter(([, ok]) => !ok).map(([id]) => id));
     })();
-  }, [miniId]);
+  }, [miniId, sh.place?.placeId]);
+
+  // A place shared from Google Maps always targets Chỉ đường.
+  useEffect(() => {
+    if (sh.phase === 'ready' && !live) setMiniId('directions');
+  }, [sh.phase, sh.place?.placeId]);
 
   const start = async () => {
     setError(undefined);
@@ -58,18 +66,7 @@ export function ContinuousPage() {
     if (s.status !== 'connected' || !saved) { setError('Hãy kết nối thiết bị trước'); return; }
     const q = normalizeQuality(quality as Partial<QualitySettings>);
     try {
-      await saveValue(`miniapp:${mini.id}:settings`, settings);
-      await saveValue(`miniapp:${mini.id}:quality`, q);
-      await saveValue('continuous:lastMiniapp', mini.id);
-      const r = new ContinuousRunner({
-        miniapp: mini,
-        settings,
-        quality: q,
-        transport: new KeepAliveTransport(saved, s.device),
-        countdown: saved.countdownParams,
-      });
-      setActiveRunner(r);
-      await r.start();
+      await startMiniApp(mini, settings, q);
     } catch (e) {
       setError(errMsg(e));
     }
@@ -78,6 +75,7 @@ export function ContinuousPage() {
   return (
     <>
       <h1>Liên tục</h1>
+      <ShareCard />
       <DevicePicker hideDisconnect={live} />
       <p class="muted"><a href="#/simulation">Mô phỏng chỉ đường</a>: xem trước chuyến đi giả lập mà không cần GPS hay thiết bị.</p>
 

@@ -17,6 +17,12 @@ export default defineConfig({
         start_url: './',
         scope: './',
         display: 'standalone',
+        // Google Maps -> Chia sẻ -> Màn E-Ink: GET `./?title=&text=&url=` (hash routing, see state/share.ts).
+        share_target: {
+          action: './',
+          method: 'GET',
+          params: { title: 'title', text: 'text', url: 'url' },
+        },
         background_color: '#f4f4f0',
         theme_color: '#111111',
         icons: [

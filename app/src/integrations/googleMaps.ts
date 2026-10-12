@@ -3,6 +3,7 @@ import type { Integration, Values } from './types';
 export const GOOGLE_MAPS_ID = 'googleMaps';
 const ROUTES_URL = 'https://routes.googleapis.com/directions/v2:computeRoutes';
 const AUTOCOMPLETE_URL = 'https://places.googleapis.com/v1/places:autocomplete';
+const SEARCH_TEXT_URL = 'https://places.googleapis.com/v1/places:searchText';
 
 export type TravelMode = 'DRIVE' | 'TWO_WHEELER' | 'WALK' | 'BICYCLE';
 
@@ -41,6 +42,33 @@ export interface PlaceSuggestion {
 export interface GoogleMapsClient {
   computeRoute(origin: LatLng, destination: Destination, mode: TravelMode): Promise<Route>;
   autocomplete(input: string, sessionToken: string, near?: LatLng): Promise<PlaceSuggestion[]>;
+  /** Best match for a free-text query (e.g. a place shared from Google Maps); null when nothing matches. */
+  searchPlace(query: string, near?: LatLng): Promise<PlaceSuggestion | null>;
+}
+
+const MAPS_TRAVEL_MODE: Record<TravelMode, string> = {
+  DRIVE: 'driving',
+  TWO_WHEELER: 'two-wheeler',
+  WALK: 'walking',
+  BICYCLE: 'bicycling',
+};
+
+/** Google Maps URLs API link that starts turn-by-turn navigation to a place. */
+export function mapsNavigationUrl(dest: { placeId: string; label: string }, mode: TravelMode): string {
+  const q = new URLSearchParams({
+    api: '1',
+    destination: dest.label,
+    destination_place_id: dest.placeId,
+    travelmode: MAPS_TRAVEL_MODE[mode],
+    dir_action: 'navigate',
+  });
+  return `https://www.google.com/maps/dir/?${q}`;
+}
+
+/** Android intent URL that opens {@link mapsNavigationUrl} directly in the Maps app (no-op when it is not installed). */
+export function mapsIntentUrl(dest: { placeId: string; label: string }, mode: TravelMode): string {
+  const https = mapsNavigationUrl(dest, mode);
+  return `intent://${https.replace(/^https:\/\//, '')}#Intent;scheme=https;package=com.google.android.apps.maps;end`;
 }
 
 const FIELD_MASK = [
@@ -136,6 +164,24 @@ export function createClient(cfg: Values): GoogleMapsClient {
         .map((s) => s.placePrediction)
         .filter((p): p is NonNullable<typeof p> => !!p)
         .map((p) => ({ placeId: p.placeId, text: p.text?.text ?? p.placeId }));
+    },
+
+    async searchPlace(query, near) {
+      const body: Record<string, unknown> = { textQuery: query, languageCode: 'vi', pageSize: 1 };
+      if (near) body.locationBias = { circle: { center: { latitude: near.lat, longitude: near.lng }, radius: 2000 } };
+      const res = await fetch(SEARCH_TEXT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': key,
+          'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress',
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw await failure(res);
+      const place = ((await res.json()) as { places?: { id: string; displayName?: { text?: string }; formattedAddress?: string }[] }).places?.[0];
+      if (!place) return null;
+      return { placeId: place.id, text: place.displayName?.text || place.formattedAddress || query };
     },
   };
 }

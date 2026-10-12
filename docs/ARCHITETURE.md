@@ -31,7 +31,8 @@ app/src/
     pack.ts       RGBA -> plane đen + plane đỏ (quét cột x=295→0, MSB trước, plane đỏ đảo bit)
   integrations/ Liên kết dịch vụ ngoài (mở rộng bằng registry)
     types.ts, registry.ts, store.ts, pkce.ts
-    googleMaps.ts (API key; Routes v2 + Places New), spotify.ts (OAuth PKCE, currently-playing)
+    googleMaps.ts (API key; Routes v2 + Places New: autocomplete, searchText; link mở Maps), spotify.ts (OAuth PKCE, currently-playing)
+    share.ts      parse nội dung Web Share Target từ Google Maps (ADR-11)
   miniapps/     Ứng dụng nhỏ cố định, tạo ảnh từ dữ liệu liên kết
     types.ts, registry.ts, quality.ts, format.ts
     spotify/, directions/ (index, geo, maneuvers)
@@ -40,9 +41,10 @@ app/src/
     continuous.ts   ContinuousRunner + interface UpdateTransport
     transports.ts   KeepAliveTransport (giữ kết nối suốt phiên, kết nối lại khi rớt)
     active.ts       singleton phiên đang chạy, restore khi pagehide
+    launch.ts       loadMiniAppConfig / startMiniApp (dùng chung cho tab Liên tục và ShareCard)
     frame.ts, wakeLock.ts
   devices/store.ts   thiết bị đã lưu (IndexedDB)
-  state/            store quan sát được, log, session, settings
+  state/            store quan sát được, log, session, settings, share (địa điểm chia sẻ từ Maps)
   diagnostics/      benchmark gửi ảnh (giữ kết nối), thống kê p50/p95
     fastRefresh.ts  (thí nghiệm, ADR-10) chuỗi lệnh thô 03/04 cho refresh đen/trắng, danh sách trắng giá trị update; LUT 0x32 cố định `fast25/15/8` (ADR-10)
   ui/               App shell + 5 tab: Thiết bị · Một lần · Liên tục · Liên kết · Chẩn đoán
@@ -107,4 +109,5 @@ Config byte: `[7]` model, `[11]` mode hiện tại, `[12]` ngày đầu tuần. 
 - Chữ đi qua dither chung với ảnh: palette đen/trắng dùng `threshold` mặc định, 3 màu dùng Floyd–Steinberg nên mép chữ 3 màu có thể lấm tấm (ADR-3, ADR-4).
 - Dừng chế độ liên tục mà không khôi phục được mode ban đầu thì chuyển sang app lịch trước khi ngắt kết nối (ADR-3, ADR-4).
 - Refresh đen/trắng nhanh dùng LUT `0x32` cố định (ADR-10): độ phân giải/độ rõ thấp hơn waveform OTP (độ đậm 3–4 so với 4–5), chưa kiểm chứng ghost sau nhiều khung liên tiếp; polarity, điện áp và nhiệt độ thấp chưa thử.
+- Chia sẻ từ Google Maps (ADR-11): tuyến do app tự tính có thể khác tuyến trong Maps; link rút gọn không giải được; Maps ở nền có thể làm PWA ngừng cập nhật.
 - Chưa xác nhận trên thiết bị: `getDevices`/`watchAdvertisements`, CORS ảnh bìa Spotify, độ ổn định của kết nối giữ suốt phiên dài.
